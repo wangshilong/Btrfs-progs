@@ -81,7 +81,8 @@ int btrfs_qgroup_parse_sort_string(char *opt_arg,
 				struct btrfs_qgroup_comparer_set **comps);
 u64 btrfs_get_path_rootid(int fd);
 int btrfs_show_qgroups(int fd, struct btrfs_qgroup_filter_set *,
-		       struct btrfs_qgroup_comparer_set *);
+		       struct btrfs_qgroup_comparer_set *,
+		       int is_table_result);
 void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column);
 struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void);
 void btrfs_qgroup_free_filter_set(struct btrfs_qgroup_filter_set *filter_set);

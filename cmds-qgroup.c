@@ -202,13 +202,14 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 }
 
 static const char * const cmd_qgroup_show_usage[] = {
-	"btrfs qgroup show -pcleF "
+	"btrfs qgroup show -pcleFt "
 	"[--sort=qgroupid,rfer,excl,max_rfer,max_excl] <path>",
 	"Show subvolume quota groups.",
 	"-p		print parent qgroup id",
 	"-c		print child qgroup id",
 	"-l		print max referenced size of qgroup",
 	"-e		print max exclusive size of qgroup",
+	"-t		print the result as a table",
 	"-F		list all qgroups which impact the given path"
 	"(include ancestral qgroups)",
 	"-f		list all qgroups which impact the given path"
@@ -231,6 +232,8 @@ static int cmd_qgroup_show(int argc, char **argv)
 	int c;
 	u64 qgroupid;
 	int filter_flag = 0;
+	int is_table_result = 0;
+	int table_better = 0;
 
 	struct btrfs_qgroup_comparer_set *comparer_set;
 	struct btrfs_qgroup_filter_set *filter_set;
@@ -243,16 +246,18 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		c = getopt_long(argc, argv, "pcleFf",
+		c = getopt_long(argc, argv, "pcleFft",
 				long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
 		case 'p':
+			table_better |= 0x1;
 			btrfs_qgroup_setup_print_column(
 				BTRFS_QGROUP_PARENT);
 			break;
 		case 'c':
+			table_better |= 0x2;
 			btrfs_qgroup_setup_print_column(
 				BTRFS_QGROUP_CHILD);
 			break;
@@ -263,6 +268,9 @@ static int cmd_qgroup_show(int argc, char **argv)
 		case 'e':
 			btrfs_qgroup_setup_print_column(
 				BTRFS_QGROUP_MAX_EXCL);
+			break;
+		case 't':
+			is_table_result = 1;
 			break;
 		case 'F':
 			filter_flag |= 0x1;
@@ -301,7 +309,13 @@ static int cmd_qgroup_show(int argc, char **argv)
 					BTRFS_QGROUP_FILTER_PARENT,
 					qgroupid);
 	}
-	ret = btrfs_show_qgroups(fd, filter_set, comparer_set);
+	if (is_table_result && table_better == 3) {
+		fprintf(stderr,
+			"ERROR: '-p' and '-c' can't used at the same time\n");
+		exit(1);
+	}
+	ret = btrfs_show_qgroups(fd, filter_set, comparer_set,
+				 is_table_result);
 	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0)

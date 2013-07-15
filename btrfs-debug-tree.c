@@ -195,7 +195,7 @@ int main(int ac, char **av)
 		if (!leaf) {
 			fprintf(stderr, "failed to read %llu\n",
 				(unsigned long long)block_only);
-			return 0;
+			exit(1);
 		}
 		btrfs_print_tree(root, leaf, 0);
 		return 0;

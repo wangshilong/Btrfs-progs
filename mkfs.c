@@ -1570,6 +1570,8 @@ int main(int ac, char **av)
 		 * occur by the following processing.
 		 * (btrfs_register_one_device() fails if O_EXCL is on)
 		 */
+		if (fd > 0)
+			close(fd);
 		fd = open(file, O_RDWR);
 		if (fd < 0) {
 			fprintf(stderr, "unable to open %s: %s\n", file,
@@ -1581,7 +1583,6 @@ int main(int ac, char **av)
 		if (ret) {
 			fprintf(stderr, "skipping duplicate device %s in FS\n",
 				file);
-			close(fd);
 			continue;
 		}
 		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,

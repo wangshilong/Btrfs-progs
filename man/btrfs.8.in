@@ -106,6 +106,11 @@ btrfs \- control a btrfs filesystem
 \fBbtrfs\fP \fBqgroup limit\fP [\fIoptions\fP] \fI<size>\fP|\fBnone\fP [\fI<qgroupid>\fP] \fI<path>\fP
 .PP
 .PP
+\fBbtrfs\fP \fBdedup register <path> \fP\fI\fP
+.PP
+\fBbtrfs\fP \fBdedup unregister <path> \fP\fI\fP
+.PP
+.PP
 \fBbtrfs\fP \fBreplace start\fP [-Bfr] \fI<srcdev>\fP|\fI<devid> <targetdev> <mount_point>\fP
 .PP
 \fBbtrfs\fP \fBreplace status\fP [-1] \fI<mount_point>\fP
@@ -663,6 +668,14 @@ Show all subvolume quota groups.
 
 \fBqgroup limit\fP [\fIoptions\fP] \fI<size>\fP|\fBnone\fP [\fI<qgroupid>\fP] \fI<path>\fP
 Limit the size of a subvolume quota group.
+.TP
+
+\fBbtrfs dedup register\fP \fI<path>\fP
+Enable data deduplication support for a filesystem.
+.TP
+
+\fBbtrfs dedup unregister\fP \fI<path>\fP
+Disable data deduplication support for a filesystem.
 .TP
 
 \fBreplace start\fR [-Bfr] \fI<srcdev>\fP|\fI<devid> <targetdev> <path>\fR

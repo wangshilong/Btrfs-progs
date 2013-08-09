@@ -36,11 +36,12 @@ int dedup_ctl(int cmd, int argc, char **argv)
 	int fd;
 	int e;
 	char *path = argv[1];
+	DIR *dirstream;
 
 	if (check_argc_exact(argc, 2))
 		return -1;
 
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return -EACCES;
@@ -48,7 +49,7 @@ int dedup_ctl(int cmd, int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_DEDUP_CTL, cmd);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: dedup command failed: %s\n",
 			strerror(e));

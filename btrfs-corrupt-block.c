@@ -32,6 +32,8 @@
 #include "list.h"
 #include "version.h"
 
+#define FIELD_BUF_LEN 80
+
 struct extent_buffer *debug_corrupt_block(struct btrfs_root *root, u64 bytenr,
 				     u32 blocksize, int copy)
 {
@@ -96,6 +98,9 @@ static void print_usage(void)
 	fprintf(stderr, "\t-E The whole extent tree to be corrupted\n");
 	fprintf(stderr, "\t-u Given chunk item to be corrupted\n");
 	fprintf(stderr, "\t-U The whole chunk tree to be corrupted\n");
+	fprintf(stderr, "\t-i The inode item to corrupt (must also specify "
+		"the field to corrupt\n");
+	fprintf(stderr, "\t-f The field in the item to corrupt\n");
 	exit(1);
 }
 
@@ -279,6 +284,83 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 	}
 }
 
+enum btrfs_inode_field {
+	BTRFS_INODE_FIELD_ISIZE,
+	BTRFS_INODE_FIELD_BAD,
+};
+
+static enum btrfs_inode_field convert_field(char *field)
+{
+	if (!strncmp(field, "isize", FIELD_BUF_LEN))
+		return BTRFS_INODE_FIELD_ISIZE;
+	return BTRFS_INODE_FIELD_BAD;
+}
+
+static int corrupt_inode(struct btrfs_trans_handle *trans,
+			 struct btrfs_root *root, u64 inode, char *field)
+{
+	struct btrfs_inode_item *ei;
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	enum btrfs_inode_field corrupt_field = convert_field(field);
+	u64 bogus;
+	u64 orig;
+	int ret;
+
+	if (corrupt_field == BTRFS_INODE_FIELD_BAD) {
+		fprintf(stderr, "Invalid field %s\n", field);
+		return -EINVAL;
+	}
+
+	key.objectid = inode;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = (u64)-1;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret < 0)
+		goto out;
+	if (ret) {
+		if (!path->slots[0]) {
+			fprintf(stderr, "Couldn't find inode %Lu\n", inode);
+			ret = -ENOENT;
+			goto out;
+		}
+		path->slots[0]--;
+		ret = 0;
+	}
+
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	if (key.objectid != inode) {
+		fprintf(stderr, "Couldn't find inode %Lu\n", inode);
+		ret = -ENOENT;
+		goto out;
+	}
+
+	ei = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			    struct btrfs_inode_item);
+	switch (corrupt_field) {
+	case BTRFS_INODE_FIELD_ISIZE:
+		orig = btrfs_inode_size(path->nodes[0], ei);
+		do {
+			bogus = rand();
+		} while (bogus == orig);
+
+		btrfs_set_inode_size(path->nodes[0], ei, bogus);
+		break;
+	default:
+		ret = -EINVAL;
+		break;
+	}
+	btrfs_mark_buffer_dirty(path->nodes[0]);
+out:
+	btrfs_free_path(path);
+	return ret;
+}
+
 static struct option long_options[] = {
 	/* { "byte-count", 1, NULL, 'b' }, */
 	{ "logical", 1, NULL, 'l' },
@@ -289,6 +371,8 @@ static struct option long_options[] = {
 	{ "keys", 0, NULL, 'k' },
 	{ "chunk-record", 0, NULL, 'u' },
 	{ "chunk-tree", 0, NULL, 'U' },
+	{ "inode", 1, NULL, 'i'},
+	{ "field", 1, NULL, 'f'},
 	{ 0, 0, 0, 0}
 };
 
@@ -449,12 +533,15 @@ int main(int ac, char **av)
 	int corrupt_block_keys = 0;
 	int chunk_rec = 0;
 	int chunk_tree = 0;
+	u64 inode = 0;
+	char field[FIELD_BUF_LEN];
 
+	field[0] = '\0';
 	srand(128);
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "l:c:b:eEkuU", long_options,
+		c = getopt_long(ac, av, "l:c:b:eEkuUi:f:", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -493,6 +580,17 @@ int main(int ac, char **av)
 			case 'U':
 				chunk_tree = 1;
 				break;
+			case 'i':
+				inode = atoll(optarg);
+				if (inode == 0) {
+					fprintf(stderr,
+						"invalid inode number\n");
+					print_usage();
+				}
+				break;
+			case 'f':
+				strncpy(field, optarg, FIELD_BUF_LEN);
+				break;
 			default:
 				print_usage();
 		}
@@ -503,6 +601,8 @@ int main(int ac, char **av)
 	if (logical == (u64)-1 && !(extent_tree || chunk_tree))
 		print_usage();
 	if (copy < 0)
+		print_usage();
+	if ((inode && !strlen(field)) || (strlen(field) && !inode))
 		print_usage();
 
 	dev = av[optind];
@@ -557,6 +657,15 @@ int main(int ac, char **av)
 		ret = corrupt_chunk_tree(trans, root->fs_info->chunk_root);
 		if (ret < 0)
 			fprintf(stderr, "Failed to corrupt chunk tree\n");
+		btrfs_commit_transaction(trans, root);
+		goto out_close;
+	}
+	if (inode) {
+		struct btrfs_trans_handle *trans;
+
+		printf("corrupting inode\n");
+		trans = btrfs_start_transaction(root, 1);
+		ret = corrupt_inode(trans, root, inode, field);
 		btrfs_commit_transaction(trans, root);
 		goto out_close;
 	}

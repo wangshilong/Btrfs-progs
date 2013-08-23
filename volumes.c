@@ -287,7 +287,7 @@ static int find_free_dev_extent(struct btrfs_trans_handle *trans,
 	/* we don't want to overwrite the superblock on the drive,
 	 * so we make sure to start at an offset of at least 1MB
 	 */
-	search_start = max((u64)1024 * 1024, search_start);
+	search_start = max(BTRFS_BLOCK_RESERVED_1M_FOR_SUPER, search_start);
 
 	if (root->fs_info->alloc_start + num_bytes <= device->total_bytes)
 		search_start = max(root->fs_info->alloc_start, search_start);
@@ -779,6 +779,11 @@ again:
 	while(index < num_stripes) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
 		avail = device->total_bytes - device->bytes_used;
+		/* we have reserved 1M for superblock at the head of device */
+		if (avail > BTRFS_BLOCK_RESERVED_1M_FOR_SUPER)
+			avail -= BTRFS_BLOCK_RESERVED_1M_FOR_SUPER;
+		else
+			avail = 0;
 		cur = cur->next;
 		if (avail >= min_free) {
 			list_move_tail(&device->dev_list, &private_devs);

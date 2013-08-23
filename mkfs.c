@@ -177,6 +177,10 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 
 	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
 				&chunk_start, &chunk_size, type);
+	if (ret == -ENOSPC) {
+		fprintf(stderr, "not enough free space\n");
+		exit(1);
+	}
 	BUG_ON(ret);
 	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
 				     type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,

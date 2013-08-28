@@ -730,7 +730,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	fd = open(path_name, O_RDONLY);
 	if (fd == -1) {
 		fprintf(stderr, "%s open failed\n", path_name);
-		return ret;
+		return -errno;
 	}
 
 	blocks = st->st_size / sectorsize;
@@ -854,7 +854,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	ret = btrfs_lookup_inode(trans, root, &path, &root_dir_key, 1);
 	if (ret) {
 		fprintf(stderr, "root dir lookup error\n");
-		return -1;
+		return ret;
 	}
 
 	leaf = path.nodes[0];
@@ -965,7 +965,7 @@ fail:
 fail_no_files:
 	free(parent_dir_entry->path);
 	free(parent_dir_entry);
-	return -1;
+	return ret;
 }
 
 static int open_target(char *output_name)
@@ -1027,6 +1027,7 @@ static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
 	ret = lstat(source_dir, &root_st);
 	if (ret) {
 		fprintf(stderr, "unable to lstat the %s\n", source_dir);
+		ret = -errno;
 		goto fail;
 	}
 
@@ -1044,7 +1045,7 @@ static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
 	return 0;
 fail:
 	fprintf(stderr, "Making image is aborted.\n");
-	return -1;
+	return ret;
 }
 
 /*
@@ -1131,17 +1132,17 @@ static int check_leaf_or_node_size(u32 size, u32 sectorsize)
 		fprintf(stderr,
 			"Illegal leafsize (or nodesize) %u (smaller than %u)\n",
 			size, sectorsize);
-		return -1;
+		return -EINVAL;
 	} else if (size > BTRFS_MAX_METADATA_BLOCKSIZE) {
 		fprintf(stderr,
 			"Illegal leafsize (or nodesize) %u (larger than %u)\n",
 			size, BTRFS_MAX_METADATA_BLOCKSIZE);
-		return -1;
+		return -EINVAL;
 	} else if (size & (sectorsize - 1)) {
 		fprintf(stderr,
 			"Illegal leafsize (or nodesize) %u (not align to %u)\n",
 			size, sectorsize);
-		return -1;
+		return -EINVAL;
 	}
 	return 0;
 }

@@ -1018,7 +1018,7 @@ static int mkdir_p(char *path)
 		path[i] = '\0';
 		ret = mkdir(path, 0777);
 		if (ret && errno != EEXIST)
-			return 1;
+			return -errno;
 		path[i] = '/';
 	}
 
@@ -1155,7 +1155,7 @@ static int scrub_start(int argc, char **argv, int resume)
 
 	if (fdmnt < 0) {
 		ERR(!do_quiet, "ERROR: can't access '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	ret = get_fs_info(path, &fi_args, &di_args);
@@ -1501,9 +1501,9 @@ out:
 	if (err)
 		return 1;
 	if (e_correctable)
-		return 7;
+		return 2;
 	if (e_uncorrectable)
-		return 8;
+		return 3;
 	return 0;
 }
 
@@ -1642,7 +1642,7 @@ static int cmd_scrub_status(int argc, char **argv)
 
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	ret = get_fs_info(path, &fi_args, &di_args);
@@ -1727,7 +1727,7 @@ out:
 		close(fdres);
 	close_file_or_dir(fdmnt, dirstream);
 
-	return err;
+	return !!err;
 }
 
 const struct cmd_group scrub_cmd_group = {

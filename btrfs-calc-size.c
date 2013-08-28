@@ -133,13 +133,13 @@ static int calc_root_size(struct btrfs_root *tree_root, struct btrfs_key *key,
 	root = btrfs_read_fs_root(tree_root->fs_info, key);
 	if (!root) {
 		fprintf(stderr, "Failed to read root %Lu\n", key->objectid);
-		return 1;
+		return PTR_ERR(root);
 	}
 
 	path = btrfs_alloc_path();
 	if (!path) {
 		fprintf(stderr, "Could not allocate path\n");
-		return 1;
+		return -ENOMEM;
 	}
 
 	memset(&stat, 0, sizeof(stat));

@@ -1226,8 +1226,6 @@ char *__strncpy__null(char *dest, const char *src, size_t n)
 /*
  * Checks to make sure that the label matches our requirements.
  * Returns:
-       0    if everything is safe and usable
-      -1    if the label is too long
  */
 static int check_label(const char *input)
 {
@@ -1236,7 +1234,7 @@ static int check_label(const char *input)
        if (len > BTRFS_LABEL_SIZE - 1) {
 		fprintf(stderr, "ERROR: Label %s is too long (max %d)\n",
 			input, BTRFS_LABEL_SIZE - 1);
-               return -1;
+		return -EOVERFLOW;
        }
 
        return 0;
@@ -1336,18 +1334,20 @@ int get_label_mounted(const char *mount_path, char *labelp)
 {
 	char label[BTRFS_LABEL_SIZE];
 	int fd;
+	int ret;
 
 	fd = open(mount_path, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: unable access to '%s'\n", mount_path);
-		return -1;
+		return -errno;
 	}
 
 	memset(label, '\0', sizeof(label));
-	if (ioctl(fd, BTRFS_IOC_GET_FSLABEL, label) < 0) {
+	ret = ioctl(fd, BTRFS_IOC_GET_FSLABEL, label);
+	if (ret < 0) {
 		fprintf(stderr, "ERROR: unable get label %s\n", strerror(errno));
 		close(fd);
-		return -1;
+		return ret;
 	}
 
 	strncpy(labelp, label, sizeof(label));
@@ -1372,8 +1372,9 @@ int get_label(const char *btrfs_dev)
 
 int set_label(const char *btrfs_dev, const char *label)
 {
-	if (check_label(label))
-		return -1;
+	int ret = check_label(label);
+	if (ret)
+		return ret;
 
 	return is_existing_blk_or_reg_file(btrfs_dev) ?
 		set_label_unmounted(btrfs_dev, label) :
@@ -1515,18 +1516,18 @@ int open_file_or_dir(const char *fname, DIR **dirstream)
 
 	ret = stat(fname, &st);
 	if (ret < 0) {
-		return -1;
+		return -errno;
 	}
 	if (S_ISDIR(st.st_mode)) {
 		*dirstream = opendir(fname);
 		if (!*dirstream)
-			return -2;
+			return -errno;
 		fd = dirfd(*dirstream);
 	} else {
 		fd = open(fname, O_RDWR);
 	}
 	if (fd < 0) {
-		fd = -3;
+		fd = -errno;
 		if (*dirstream)
 			closedir(*dirstream);
 	}

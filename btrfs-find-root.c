@@ -55,7 +55,7 @@ static int csum_block(void *buf, u32 len)
 	result = malloc(csum_size * sizeof(char));
 	if (!result) {
 		fprintf(stderr, "No memory\n");
-		return 1;
+		return -ENOMEM;
 	}
 
 	len -= BTRFS_CSUM_SIZE;
@@ -186,7 +186,7 @@ static int read_physical(struct btrfs_root *root, int fd, u64 offset,
 
 	if (!iobuf) {
 		fprintf(stderr, "No memory\n");
-		return -1;
+		return -ENOMEM;
 	}
 
 	while (total_read < len) {

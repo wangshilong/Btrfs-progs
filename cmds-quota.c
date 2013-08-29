@@ -40,7 +40,7 @@ static int quota_ctl(int cmd, int argc, char **argv)
 	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 2))
-		return -1;
+		return -EINVAL;
 
 	memset(&args, 0, sizeof(args));
 	args.cmd = cmd;
@@ -48,7 +48,7 @@ static int quota_ctl(int cmd, int argc, char **argv)
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
-		return 12;
+		return -EACCES;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_QUOTA_CTL, &args);
@@ -57,7 +57,7 @@ static int quota_ctl(int cmd, int argc, char **argv)
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: quota command failed: %s\n",
 			strerror(e));
-		return 30;
+		return ret;
 	}
 	return 0;
 }
@@ -76,7 +76,7 @@ static int cmd_quota_enable(int argc, char **argv)
 	int ret = quota_ctl(BTRFS_QUOTA_CTL_ENABLE, argc, argv);
 	if (ret < 0)
 		usage(cmd_quota_enable_usage);
-	return ret;
+	return !!ret;
 }
 
 static const char * const cmd_quota_disable_usage[] = {
@@ -90,7 +90,7 @@ static int cmd_quota_disable(int argc, char **argv)
 	int ret = quota_ctl(BTRFS_QUOTA_CTL_DISABLE, argc, argv);
 	if (ret < 0)
 		usage(cmd_quota_disable_usage);
-	return ret;
+	return !!ret;
 }
 
 static const char * const cmd_quota_rescan_usage[] = {
@@ -132,7 +132,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 
 	if (ioctlnum != BTRFS_IOC_QUOTA_RESCAN && wait_for_completion) {
 		fprintf(stderr, "ERROR: -w cannot be used with -s\n");
-		return 12;
+		return 1;
 	}
 
 	if (check_argc_exact(argc - optind, 1))
@@ -144,7 +144,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	ret = ioctl(fd, ioctlnum, &args);
@@ -160,7 +160,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 		if (ret < 0) {
 			fprintf(stderr, "ERROR: quota rescan failed: "
 				"%s\n", strerror(e));
-			return 30;
+			return 1;
 		}  else {
 			printf("quota rescan started\n");
 		}

@@ -213,7 +213,7 @@ static int  btrfs_list_get_sort_item(char *sort_name)
 		if (strcmp(sort_name, all_sort_items[i]) == 0)
 			return i;
 	}
-	return -1;
+	return -ENOENT;
 }
 
 struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void)
@@ -1818,7 +1818,7 @@ int btrfs_list_parse_sort_string(char *optarg,
 		}
 
 		if (flag == 0)
-			return -1;
+			return -EINVAL;
 
 		else {
 			if (*p == '+') {
@@ -1858,7 +1858,7 @@ int btrfs_list_parse_filter_string(char *optarg,
 		arg = (u64)strtol(optarg, &ptr_parse_end, 10);
 		type += 2;
 		if (ptr_parse_end != ptr_optarg_end)
-			return -1;
+			return -EINVAL;
 
 		btrfs_list_setup_filter(filters, type, arg);
 		break;
@@ -1866,7 +1866,7 @@ int btrfs_list_parse_filter_string(char *optarg,
 		arg = (u64)strtoll(optarg, &ptr_parse_end, 10);
 		type += 1;
 		if (ptr_parse_end != ptr_optarg_end)
-			return -1;
+			return -EINVAL;
 
 		btrfs_list_setup_filter(filters, type, arg);
 		break;
@@ -1875,7 +1875,7 @@ int btrfs_list_parse_filter_string(char *optarg,
 		arg = (u64)strtoll(optarg, &ptr_parse_end, 10);
 
 		if (ptr_parse_end != ptr_optarg_end)
-			return -1;
+			return -EINVAL;
 		btrfs_list_setup_filter(filters, type, arg);
 		break;
 	}

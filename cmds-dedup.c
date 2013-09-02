@@ -60,39 +60,39 @@ int dedup_ctl(int cmd, int argc, char **argv)
 	return 0;
 }
 
-static const char * const cmd_dedup_reg_usage[] = {
-	"btrfs dedup register <path>",
+static const char * const cmd_dedup_enable_usage[] = {
+	"btrfs dedup enable <path>",
 	"Enable data deduplication support for a filesystem.",
 	NULL
 };
 
-static int cmd_dedup_reg(int argc, char **argv)
+static int cmd_dedup_enable(int argc, char **argv)
 {
 	int ret = dedup_ctl(BTRFS_DEDUP_CTL_REG, argc, argv);
 	if (ret < 0)
-		usage(cmd_dedup_reg_usage);
+		usage(cmd_dedup_enable_usage);
 	return ret;
 }
 
-static const char * const cmd_dedup_unreg_usage[] = {
-	"btrfs dedup unregister <path>",
+static const char * const cmd_dedup_disable_usage[] = {
+	"btrfs dedup disable <path>",
 	"Disable data deduplication support for a filesystem.",
 	NULL
 };
 
-static int cmd_dedup_unreg(int argc, char **argv)
+static int cmd_dedup_disable(int argc, char **argv)
 {
 	int ret = dedup_ctl(BTRFS_DEDUP_CTL_UNREG, argc, argv);
 	if (ret < 0)
-		usage(cmd_dedup_unreg_usage);
+		usage(cmd_dedup_disable_usage);
 	return ret;
 }
 
 const struct cmd_group dedup_cmd_group = {
 	dedup_cmd_group_usage, NULL, {
-		{ "register", cmd_dedup_reg, cmd_dedup_reg_usage, NULL, 0 },
-		{ "unregister", cmd_dedup_unreg, cmd_dedup_unreg_usage, 0, 0 },
-		{ 0, 0, 0, 0, 0 }
+		{ "enable", cmd_dedup_enable, cmd_dedup_enable_usage, NULL, 0 },
+		{ "disable", cmd_dedup_disable, cmd_dedup_disable_usage, NULL, 0 },
+		NULL_CMD_STRUCT
 	}
 };
 

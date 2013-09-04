@@ -39,7 +39,7 @@ int dedup_ctl(int cmd, int argc, char **argv)
 	DIR *dirstream;
 
 	if (check_argc_exact(argc, 2))
-		return -1;
+		return -EINVAL;
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
@@ -71,7 +71,7 @@ static int cmd_dedup_enable(int argc, char **argv)
 	int ret = dedup_ctl(BTRFS_DEDUP_CTL_REG, argc, argv);
 	if (ret < 0)
 		usage(cmd_dedup_enable_usage);
-	return ret;
+	return !!ret;
 }
 
 static const char * const cmd_dedup_disable_usage[] = {
@@ -85,7 +85,7 @@ static int cmd_dedup_disable(int argc, char **argv)
 	int ret = dedup_ctl(BTRFS_DEDUP_CTL_UNREG, argc, argv);
 	if (ret < 0)
 		usage(cmd_dedup_disable_usage);
-	return ret;
+	return !!ret;
 }
 
 const struct cmd_group dedup_cmd_group = {

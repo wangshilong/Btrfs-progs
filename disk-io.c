@@ -982,7 +982,8 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info)
 static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 					     u64 sb_bytenr,
 					     u64 root_tree_bytenr, int writes,
-					     int partial, int restore)
+					     int partial, int restore,
+					     int run_ioctl)
 {
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_super_block *disk_super;
@@ -1005,7 +1006,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	if (restore)
 		fs_info->on_restoring = 1;
 
-	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr, 1);
+	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr, run_ioctl);
 	if (ret)
 		goto out;
 
@@ -1078,7 +1079,7 @@ struct btrfs_fs_info *open_ctree_fs_info_restore(const char *filename,
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
-			       writes, partial, restore);
+			       writes, partial, restore, 1);
 	close(fp);
 	return info;
 }
@@ -1100,7 +1101,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
-			       writes, partial, 0);
+			       writes, partial, 0, 1);
 	close(fp);
 	return info;
 }
@@ -1115,11 +1116,29 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr, int writes)
 	return info->fs_root;
 }
 
+struct btrfs_root *open_ctree_with_broken_super(const char *filename,
+						u64 sb_bytenr)
+{
+	int fp;
+	struct btrfs_fs_info *info;
+	int flags = O_CREAT | O_RDWR;
+
+	fp = open(filename, flags, 0600);
+	if (fp < 0) {
+		fprintf (stderr, "Could not open %s\n", filename);
+		return NULL;
+	}
+	info = __open_ctree_fd(fp, filename, sb_bytenr, 0,
+			       1, 0, 0, 0);
+	close(fp);
+	return info->fs_root;
+}
+
 struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				 int writes)
 {
 	struct btrfs_fs_info *info;
-	info = __open_ctree_fd(fp, path, sb_bytenr, 0, writes, 0, 0);
+	info = __open_ctree_fd(fp, path, sb_bytenr, 0, writes, 0, 0, 1);
 	if (!info)
 		return NULL;
 	return info->fs_root;

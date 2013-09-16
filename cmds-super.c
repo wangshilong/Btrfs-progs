@@ -329,15 +329,17 @@ int cmd_super_recover(int argc, char **argv)
 		ret = ask_user("We are going to recover bad supers from good copies, Are you sure?");
 		if (!ret) {
 			ret = 0;
+			printf("hello world\n");
 			goto no_recover;
 		}
 	}
 
 	record = recover_get_good_super(&recover);
-	root = open_ctree(record->device_name, record->bytenr, O_RDWR);
+	BUG_ON(!record);
+	root = open_ctree_with_broken_super(record->device_name, record->bytenr);
 	BUG_ON(!root);
 
-	trans = btrfs_start_transaction(root, 0);
+	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(!trans);
 
 	ret = btrfs_commit_transaction(trans, root);

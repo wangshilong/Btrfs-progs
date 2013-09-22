@@ -3227,14 +3227,19 @@ static int verify_space_cache(struct btrfs_root *root,
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-	if (ret < 0)
+	if (ret < 0) {
+		btrfs_free_path(path);
 		return ret;
+	}
+
 	ret = 0;
 	while (1) {
 		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
 			ret = btrfs_next_leaf(root, path);
-			if (ret < 0)
+			if (ret < 0) {
+				btrfs_free_path(path);
 				return ret;
+			}
 			if (ret > 0) {
 				ret = 0;
 				break;

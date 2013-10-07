@@ -20,6 +20,7 @@
 #include <sys/ioctl.h>
 #include "ctree.h"
 #include "ioctl.h"
+#include "utils.h"
 
 #define BTRFS_QGROUP_NFILTERS_INCREASE (2 * BTRFS_QGROUP_FILTER_MAX)
 #define BTRFS_QGROUP_NCOMPS_INCREASE (2 * BTRFS_QGROUP_COMP_MAX)
@@ -190,10 +191,12 @@ static void print_qgroup_column_add_blank(enum btrfs_qgroup_column_enum column,
 }
 
 static void print_qgroup_column(struct btrfs_qgroup *qgroup,
-				enum btrfs_qgroup_column_enum column)
+				enum btrfs_qgroup_column_enum column,
+				int block_size)
 {
 	BUG_ON(column >= BTRFS_QGROUP_ALL || column < 0);
 	int len;
+	char tmp[100];
 
 	switch (column) {
 
@@ -203,11 +206,17 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		print_qgroup_column_add_blank(BTRFS_QGROUP_QGROUPID, len);
 		break;
 	case BTRFS_QGROUP_RFER:
-		len = printf("%lld", qgroup->rfer);
+		len = block_size_snprintf((signed long long)qgroup->rfer, tmp,
+					sizeof(tmp), block_size);
+		BUG_ON(len < 0);
+		printf("%s", tmp);
 		print_qgroup_column_add_blank(BTRFS_QGROUP_RFER, len);
 		break;
 	case BTRFS_QGROUP_EXCL:
-		len = printf("%lld", qgroup->excl);
+		len = block_size_snprintf((signed long long)qgroup->excl, tmp,
+					sizeof(tmp), block_size);
+		BUG_ON(len < 0);
+		printf("%s", tmp);
 		print_qgroup_column_add_blank(BTRFS_QGROUP_EXCL, len);
 		break;
 	case BTRFS_QGROUP_PARENT:
@@ -215,11 +224,17 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		print_qgroup_column_add_blank(BTRFS_QGROUP_PARENT, len);
 		break;
 	case BTRFS_QGROUP_MAX_RFER:
-		len = printf("%llu", qgroup->max_rfer);
+		len = block_size_snprintf(qgroup->max_rfer, tmp,
+					sizeof(tmp), block_size);
+		BUG_ON(len < 0);
+		printf("%s", tmp);
 		print_qgroup_column_add_blank(BTRFS_QGROUP_MAX_RFER, len);
 		break;
 	case BTRFS_QGROUP_MAX_EXCL:
-		len = printf("%llu", qgroup->max_excl);
+		len = block_size_snprintf(qgroup->max_excl, tmp,
+					sizeof(tmp), block_size);
+		BUG_ON(len < 0);
+		printf("%s", tmp);
 		print_qgroup_column_add_blank(BTRFS_QGROUP_MAX_EXCL, len);
 		break;
 	case BTRFS_QGROUP_CHILD:
@@ -231,14 +246,15 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 	}
 }
 
-static void print_single_qgroup_table(struct btrfs_qgroup *qgroup)
+static void print_single_qgroup_table(struct btrfs_qgroup *qgroup,
+				      int block_size)
 {
 	int i;
 
 	for (i = 0; i < BTRFS_QGROUP_ALL; i++) {
 		if (!btrfs_qgroup_columns[i].need_print)
 			continue;
-		print_qgroup_column(qgroup, i);
+		print_qgroup_column(qgroup, i, block_size);
 
 		if (i != BTRFS_QGROUP_CHILD)
 			printf(" ");
@@ -882,7 +898,8 @@ static int sort_tree_insert(struct qgroup_lookup *sort_tree,
 }
 
 static void __update_columns_max_len(struct btrfs_qgroup *bq,
-				     enum btrfs_qgroup_column_enum column)
+				     enum btrfs_qgroup_column_enum column,
+				     int block_size)
 {
 	BUG_ON(column >= BTRFS_QGROUP_ALL || column < 0);
 	struct btrfs_qgroup_list *list = NULL;
@@ -900,26 +917,30 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_RFER:
-		sprintf(tmp, "%llu", bq->rfer);
-		len = strlen(tmp);
+		len = block_size_snprintf((signed long long)bq->rfer, tmp,
+					sizeof(tmp), block_size);
+		BUG_ON(len < 0);
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_EXCL:
-		sprintf(tmp, "%llu", bq->excl);
-		len = strlen(tmp);
+		len = block_size_snprintf((signed long long)bq->excl, tmp,
+					sizeof(tmp), block_size);
+		BUG_ON(len < 0);
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_MAX_RFER:
-		sprintf(tmp, "%llu", bq->max_rfer);
-		len = strlen(tmp);
+		len = block_size_snprintf(bq->max_rfer, tmp,
+					sizeof(tmp), block_size);
+		BUG_ON(len < 0);
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_MAX_EXCL:
-		sprintf(tmp, "%llu", bq->max_excl);
-		len = strlen(tmp);
+		len = block_size_snprintf(bq->max_excl, tmp,
+					sizeof(tmp), block_size);
+		BUG_ON(len < 0);
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
@@ -971,21 +992,22 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 
 }
 
-static void update_columns_max_len(struct btrfs_qgroup *bq)
+static void update_columns_max_len(struct btrfs_qgroup *bq, int block_size)
 {
 	int i;
 
 	for (i = 0; i < BTRFS_QGROUP_ALL; i++) {
 		if (!btrfs_qgroup_columns[i].need_print)
 			continue;
-		__update_columns_max_len(bq, i);
+		__update_columns_max_len(bq, i, block_size);
 	}
 }
 
 static void __filter_and_sort_qgroups(struct qgroup_lookup *all_qgroups,
 				 struct qgroup_lookup *sort_tree,
 				 struct btrfs_qgroup_filter_set *filter_set,
-				 struct btrfs_qgroup_comparer_set *comp_set)
+				 struct btrfs_qgroup_comparer_set *comp_set,
+				 int block_size)
 {
 	struct rb_node *n;
 	struct btrfs_qgroup *entry;
@@ -1002,7 +1024,7 @@ static void __filter_and_sort_qgroups(struct qgroup_lookup *all_qgroups,
 		if (ret) {
 			sort_tree_insert(sort_tree, entry, comp_set);
 
-			update_columns_max_len(entry);
+			update_columns_max_len(entry, block_size);
 		}
 		n = rb_prev(n);
 	}
@@ -1131,7 +1153,8 @@ done:
 	return ret;
 }
 
-static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup)
+static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup,
+			      int block_size)
 {
 
 	struct rb_node *n;
@@ -1142,14 +1165,15 @@ static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup)
 	n = rb_first(&qgroup_lookup->root);
 	while (n) {
 		entry = rb_entry(n, struct btrfs_qgroup, sort_node);
-		print_single_qgroup_table(entry);
+		print_single_qgroup_table(entry, block_size);
 		n = rb_next(n);
 	}
 }
 
 int btrfs_show_qgroups(int fd,
 		       struct btrfs_qgroup_filter_set *filter_set,
-		       struct btrfs_qgroup_comparer_set *comp_set)
+		       struct btrfs_qgroup_comparer_set *comp_set,
+		       int block_size)
 {
 
 	struct qgroup_lookup qgroup_lookup;
@@ -1159,9 +1183,13 @@ int btrfs_show_qgroups(int fd,
 	ret = __qgroups_search(fd, &qgroup_lookup);
 	if (ret)
 		return ret;
+	/*
+	 * we pass block_size here because we need it to
+	 * update max columns.
+	 */
 	__filter_and_sort_qgroups(&qgroup_lookup, &sort_tree,
-				  filter_set, comp_set);
-	print_all_qgroups(&sort_tree);
+				  filter_set, comp_set, block_size);
+	print_all_qgroups(&sort_tree, block_size);
 
 	__free_all_qgroups(&qgroup_lookup);
 	btrfs_qgroup_free_filter_set(filter_set);

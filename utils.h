@@ -56,6 +56,8 @@ void pretty_size_snprintf(u64 size, char *str, size_t str_bytes);
 		_str;							\
 	})
 
+int parse_block_size(const char *ch);
+int block_size_snprintf(double size, char *str, size_t str_bytes, int format);
 int get_mountpt(char *dev, char *mntpt, size_t size);
 int btrfs_scan_block_devices(int run_ioctl);
 u64 parse_size(char *s);

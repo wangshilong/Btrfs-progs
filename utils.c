@@ -1219,6 +1219,56 @@ void pretty_size_snprintf(u64 size, char *str, size_t str_bytes)
 	snprintf(str, str_bytes, "%.2f%s", fraction, size_strs[num_divs]);
 }
 
+int parse_block_size(const char *ch)
+{
+	int len = strlen(ch);
+	if (len != 1)
+		return -1;
+
+	switch (ch[0]) {
+	case 'k':
+	case 'K':
+		return 1;
+	case 'm':
+	case 'M':
+		return 2;
+	case 'g':
+	case 'G':
+		return 3;
+	case 't':
+	case 'T':
+		return 4;
+	case 'p':
+	case 'P':
+		return 5;
+	case 'e':
+	case 'E':
+		return 6;
+	default:
+		return -1;
+	}
+
+	return -1;
+}
+
+int block_size_snprintf(double size, char *str, size_t str_bytes, int format)
+{
+	double fraction = size;
+	int cnt = format;
+
+	if (str_bytes == 0)
+		return 0;
+	if (format < 0 || format >= ARRAY_SIZE(size_strs))
+		return -1;
+	if (format == 0)
+		return snprintf(str, str_bytes, "%.f", size);
+
+	while (format--)
+		fraction /= 1024;
+
+	return snprintf(str, str_bytes, "%.2f%s", fraction, size_strs[cnt]);
+}
+
 /*
  * __strncpy__null - strncpy with null termination
  * @dest:	the target array

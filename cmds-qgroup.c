@@ -202,8 +202,7 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 }
 
 static const char * const cmd_qgroup_show_usage[] = {
-	"btrfs qgroup show -pcreFf "
-	"[--sort=qgroupid,rfer,excl,max_rfer,max_excl] <path>",
+	"btrfs qgroup show [options] <path>",
 	"Show subvolume quota groups.",
 	"-p		print parent qgroup id",
 	"-c		print child qgroup id",
@@ -218,6 +217,8 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"rfer,max_rfer or max_excl",
 	"		you can use '+' or '-' in front of each item.",
 	"		(+:ascending, -:descending, ascending default)",
+	"--block-size=BLOCK_SIZE",
+	"		Here BLOCK_SIZE can be k,K,m,M,g,G,t,T,p,P,e,E",
 	NULL
 };
 
@@ -231,6 +232,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	int c;
 	u64 qgroupid;
 	int filter_flag = 0;
+	int block_size = 0;
 
 	struct btrfs_qgroup_comparer_set *comparer_set;
 	struct btrfs_qgroup_filter_set *filter_set;
@@ -238,6 +240,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	comparer_set = btrfs_qgroup_alloc_comparer_set();
 	struct option long_options[] = {
 		{"sort", 1, NULL, 'S'},
+		{"block-size", 1, NULL, 'B'},
 		{0, 0, 0, 0}
 	};
 
@@ -276,6 +279,13 @@ static int cmd_qgroup_show(int argc, char **argv)
 			if (ret)
 				usage(cmd_qgroup_show_usage);
 			break;
+		case 'B':
+			block_size = parse_block_size(optarg);
+			if (block_size < 0) {
+				fprintf(stderr, "Invalid block size\n");
+				usage(cmd_qgroup_show_usage);
+			}
+			break;
 		default:
 			usage(cmd_qgroup_show_usage);
 		}
@@ -301,7 +311,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 					BTRFS_QGROUP_FILTER_PARENT,
 					qgroupid);
 	}
-	ret = btrfs_show_qgroups(fd, filter_set, comparer_set);
+	ret = btrfs_show_qgroups(fd, filter_set, comparer_set, block_size);
 	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0)

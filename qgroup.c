@@ -206,15 +206,27 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		print_qgroup_column_add_blank(BTRFS_QGROUP_QGROUPID, len);
 		break;
 	case BTRFS_QGROUP_RFER:
-		len = block_size_snprintf((signed long long)qgroup->rfer, tmp,
-					sizeof(tmp), block_size);
+		if (block_size == BTRFS_QGROUP_PRINT_HUMAN_READABLE)
+			len = pretty_size_snprintf(
+					(signed long long)qgroup->rfer,
+					tmp, sizeof(tmp));
+		else
+			len = block_size_snprintf(
+					(signed long long)qgroup->rfer,
+					tmp, sizeof(tmp), block_size);
 		BUG_ON(len < 0);
 		printf("%s", tmp);
 		print_qgroup_column_add_blank(BTRFS_QGROUP_RFER, len);
 		break;
 	case BTRFS_QGROUP_EXCL:
-		len = block_size_snprintf((signed long long)qgroup->excl, tmp,
-					sizeof(tmp), block_size);
+		if (block_size == BTRFS_QGROUP_PRINT_HUMAN_READABLE)
+			len = pretty_size_snprintf(
+					(signed long long)qgroup->excl,
+					tmp, sizeof(tmp));
+		else
+			len = block_size_snprintf(
+					(signed long long)qgroup->excl,
+					tmp, sizeof(tmp), block_size);
 		BUG_ON(len < 0);
 		printf("%s", tmp);
 		print_qgroup_column_add_blank(BTRFS_QGROUP_EXCL, len);
@@ -224,14 +236,22 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		print_qgroup_column_add_blank(BTRFS_QGROUP_PARENT, len);
 		break;
 	case BTRFS_QGROUP_MAX_RFER:
-		len = block_size_snprintf(qgroup->max_rfer, tmp,
+		if (block_size == BTRFS_QGROUP_PRINT_HUMAN_READABLE)
+			len = pretty_size_snprintf(qgroup->max_rfer, tmp,
+					sizeof(tmp));
+		else
+			len = block_size_snprintf(qgroup->max_rfer, tmp,
 					sizeof(tmp), block_size);
 		BUG_ON(len < 0);
 		printf("%s", tmp);
 		print_qgroup_column_add_blank(BTRFS_QGROUP_MAX_RFER, len);
 		break;
 	case BTRFS_QGROUP_MAX_EXCL:
-		len = block_size_snprintf(qgroup->max_excl, tmp,
+		if (block_size == BTRFS_QGROUP_PRINT_HUMAN_READABLE)
+			len = pretty_size_snprintf(qgroup->max_excl, tmp,
+					sizeof(tmp));
+		else
+			len = block_size_snprintf(qgroup->max_excl, tmp,
 					sizeof(tmp), block_size);
 		BUG_ON(len < 0);
 		printf("%s", tmp);
@@ -917,28 +937,46 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_RFER:
-		len = block_size_snprintf((signed long long)bq->rfer, tmp,
-					sizeof(tmp), block_size);
+		if (block_size == BTRFS_QGROUP_PRINT_HUMAN_READABLE)
+			len = pretty_size_snprintf(
+					(signed long long)bq->rfer,
+					tmp, sizeof(tmp));
+		else
+			len = block_size_snprintf((signed long long)bq->rfer,
+					tmp, sizeof(tmp), block_size);
 		BUG_ON(len < 0);
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_EXCL:
-		len = block_size_snprintf((signed long long)bq->excl, tmp,
-					sizeof(tmp), block_size);
+		if (block_size == BTRFS_QGROUP_PRINT_HUMAN_READABLE)
+			len = pretty_size_snprintf(
+					(signed long long)bq->excl,
+					tmp, sizeof(tmp));
+		else
+			len = block_size_snprintf((signed long long)bq->excl,
+					tmp, sizeof(tmp), block_size);
 		BUG_ON(len < 0);
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_MAX_RFER:
-		len = block_size_snprintf(bq->max_rfer, tmp,
+		if (block_size == BTRFS_QGROUP_PRINT_HUMAN_READABLE)
+			len = pretty_size_snprintf(bq->max_rfer, tmp,
+					sizeof(tmp));
+		else
+			len = block_size_snprintf(bq->max_rfer, tmp,
 					sizeof(tmp), block_size);
 		BUG_ON(len < 0);
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_MAX_EXCL:
-		len = block_size_snprintf(bq->max_excl, tmp,
+		if (block_size == BTRFS_QGROUP_PRINT_HUMAN_READABLE)
+			len = pretty_size_snprintf(bq->max_excl, tmp,
+					sizeof(tmp));
+		else
+			len = block_size_snprintf(bq->max_excl, tmp,
 					sizeof(tmp), block_size);
 		BUG_ON(len < 0);
 		if (btrfs_qgroup_columns[column].max_len < len)

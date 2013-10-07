@@ -204,6 +204,7 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 static const char * const cmd_qgroup_show_usage[] = {
 	"btrfs qgroup show [options] <path>",
 	"Show subvolume quota groups.",
+	"-h		print size in human readable format",
 	"-p		print parent qgroup id",
 	"-c		print child qgroup id",
 	"-r		print max referenced size of qgroup",
@@ -246,7 +247,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		c = getopt_long(argc, argv, "pcreFf",
+		c = getopt_long(argc, argv, "pcreFfh",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -280,11 +281,21 @@ static int cmd_qgroup_show(int argc, char **argv)
 				usage(cmd_qgroup_show_usage);
 			break;
 		case 'B':
-			block_size = parse_block_size(optarg);
-			if (block_size < 0) {
+			ret = parse_block_size(optarg);
+			if (ret < 0) {
 				fprintf(stderr, "Invalid block size\n");
 				usage(cmd_qgroup_show_usage);
 			}
+			/* force to print in human readable format
+			 * if -h is given
+			 */
+			if (block_size == BTRFS_QGROUP_PRINT_HUMAN_READABLE)
+				break;
+			else
+				block_size = ret;
+			break;
+		case 'h':
+			block_size = BTRFS_QGROUP_PRINT_HUMAN_READABLE;
 			break;
 		default:
 			usage(cmd_qgroup_show_usage);

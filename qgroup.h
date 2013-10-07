@@ -22,6 +22,8 @@
 #include "ioctl.h"
 #include "kerncompat.h"
 
+#define BTRFS_QGROUP_PRINT_HUMAN_READABLE (-1)
+
 struct btrfs_qgroup;
 
 typedef int (*btrfs_qgroup_filter_func)(struct btrfs_qgroup *, u64);

@@ -1597,7 +1597,7 @@ u64 parse_size(char *s)
 			s[i+1]);
 		exit(51);
 	}
-	return strtoull(s, NULL, 10) * mult;
+	return arg_strtou64(s) * mult;
 }
 
 int open_file_or_dir(const char *fname, DIR **dirstream)

@@ -52,6 +52,7 @@ static LIST_HEAD(duplicate_extents);
 static LIST_HEAD(delete_items);
 static int repair = 0;
 static int no_holes = 0;
+int init_extent_tree = 0;
 
 struct extent_backref {
 	struct list_head list;
@@ -3915,11 +3916,24 @@ static int run_next_block(struct btrfs_trans_handle *trans,
 
 	nritems = btrfs_header_nritems(buf);
 
-	ret = btrfs_lookup_extent_info(NULL, root, bytenr,
-				       btrfs_header_level(buf), 1, NULL,
-				       &flags);
-	if (ret < 0)
-		flags = BTRFS_BLOCK_FLAG_FULL_BACKREF;
+	/*
+	 * In some cases, we could not find extent item in extent tree
+	 * because of corrupt tree block or extent tree.for example we
+	 * have recreated extent tree before.
+	 */
+	if (!init_extent_tree) {
+		ret = btrfs_lookup_extent_info(NULL, root, bytenr,
+				       	       btrfs_header_level(buf), 1,
+					       NULL, &flags);
+		/*
+		 * we don't find the extent info in the extent tree.
+		 * FIXME, we just ignore this error for now.
+		 */
+		if (ret < 0)
+			flags = 0;
+	} else {
+		flags = 0;
+	}
 
 	if (flags & BTRFS_BLOCK_FLAG_FULL_BACKREF) {
 		parent = bytenr;
@@ -5102,16 +5116,27 @@ static int fixup_extent_refs(struct btrfs_trans_handle *trans,
 	int allocated = 0;
 	u64 flags = 0;
 
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
 	/* remember our flags for recreating the extent */
 	ret = btrfs_lookup_extent_info(NULL, info->extent_root, rec->start,
 				       rec->max_size, rec->metadata, NULL,
 				       &flags);
-	if (ret < 0)
-		flags = BTRFS_BLOCK_FLAG_FULL_BACKREF;
-
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	if (ret < 0) {
+		if (init_extent_tree)
+			flags = 0;
+		else {
+			/*
+			 * we just discard this extent for now.
+			 */
+			ret = delete_extent_records(trans, info->extent_root,
+						    path, rec->start, rec->max_size);
+			if (ret < 0)
+				goto out;
+		}
+	}
 
 	if (rec->refs != rec->extent_item_refs && !rec->metadata) {
 		/*
@@ -6399,7 +6424,6 @@ int cmd_check(int argc, char **argv)
 	u64 num;
 	int option_index = 0;
 	int init_csum_tree = 0;
-	int init_extent_tree = 0;
 	enum btrfs_open_ctree_flags ctree_flags =
 		OPEN_CTREE_PARTIAL | OPEN_CTREE_EXCLUSIVE;
 

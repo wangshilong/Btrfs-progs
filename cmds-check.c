@@ -6055,11 +6055,13 @@ static int pin_metadata_blocks(struct btrfs_fs_info *fs_info)
 
 static int reset_block_groups(struct btrfs_fs_info *fs_info)
 {
+	struct btrfs_block_group_cache *cache;
 	struct btrfs_path *path;
 	struct extent_buffer *leaf;
 	struct btrfs_chunk *chunk;
 	struct btrfs_key key;
 	int ret;
+	u64 start;
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -6110,7 +6112,18 @@ static int reset_block_groups(struct btrfs_fs_info *fs_info)
 				      btrfs_chunk_type(leaf, chunk),
 				      key.objectid, key.offset,
 				      btrfs_chunk_length(leaf, chunk));
+		set_extent_dirty(&fs_info->free_space_cache, key.offset,
+				 key.offset + btrfs_chunk_length(leaf, chunk),
+				 GFP_NOFS);
 		path->slots[0]++;
+	}
+	start = 0;
+	while (1) {
+		cache = btrfs_lookup_first_block_group(fs_info, start);
+		if (!cache)
+			break;
+		cache->cached = 1;
+		start = cache->key.objectid + cache->key.offset;
 	}
 
 	btrfs_free_path(path);
@@ -6265,12 +6278,6 @@ static int reinit_extent_tree(struct btrfs_trans_handle *trans,
 		return ret;
 	}
 
-	ret = reset_balance(trans, fs_info);
-	if (ret) {
-		fprintf(stderr, "error reseting the pending balance\n");
-		return ret;
-	}
-
 	/* Ok we can allocate now, reinit the extent root */
 	ret = btrfs_fsck_reinit_root(trans, fs_info->extent_root, 0);
 	if (ret) {
@@ -6305,7 +6312,11 @@ static int reinit_extent_tree(struct btrfs_trans_handle *trans,
 		btrfs_extent_post_op(trans, fs_info->extent_root);
 	}
 
-	return 0;
+	ret = reset_balance(trans, fs_info);
+	if (ret)
+		fprintf(stderr, "error reseting the pending balance\n");
+
+	return ret;
 }
 
 static int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)

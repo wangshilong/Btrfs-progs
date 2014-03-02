@@ -5995,7 +5995,6 @@ static int pin_down_tree_blocks(struct btrfs_fs_info *fs_info,
 				continue;
 			/* Skip the extent root and reloc roots */
 			if (key.objectid == BTRFS_EXTENT_TREE_OBJECTID ||
-			    key.objectid == BTRFS_TREE_RELOC_OBJECTID ||
 			    key.objectid == BTRFS_DATA_RELOC_TREE_OBJECTID)
 				continue;
 			ri = btrfs_item_ptr(eb, i, struct btrfs_root_item);

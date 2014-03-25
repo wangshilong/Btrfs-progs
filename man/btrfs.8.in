@@ -12,7 +12,9 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBsubvolume list\fP [\fIoptions\fP] [-G [+|-]\fIvalue\fP] [-C [+|-]\fIvalue\fP] [--sort=rootid,gen,ogen,path] \fI<path>\fP
 .PP
-\fBbtrfs\fP \fBsubvolume snapshot\fP [-r] \fI<source>\fP \fI<dest>\fP|[\fI<dest>\fP/]\fI<name>\fP
+\fBbtrfs\fP \fBsubvolume snapshot\fP [-r] [-i qgroupid] \fI<source>\fP \fI<dest>\fP|[\fI<dest>\fP/]\fI<name>\fP
+.PP
+\fBbtrfs\fP \fBsubvolume snapshot\fP [-r] [-i qgroupid] \fI-s <subvolid>\fP \fI<dest>/<name>\fP
 .PP
 \fBbtrfs\fP \fBsubvolume get-default\fP\fI <path>\fP
 .PP
@@ -257,12 +259,35 @@ for \fB--sort\fP you can combine some items together by ',', just like
 .RE
 .TP
 
-\fBsubvolume snapshot\fP [-r] \fI<source>\fP \fI<dest>\fP|[\fI<dest>\fP/]\fI<name>\fP
+\fBsubvolume snapshot\fP [-r] [-i qgroupid] \fI<source>\fP \fI<dest>\fP|[\fI<dest>\fP/]\fI<name>\fP
 Create a writable/readonly snapshot of the subvolume \fI<source>\fR with the
 name \fI<name>\fR in the \fI<dest>\fR directory.
 If only \fI<dest>\fR is given, the subvolume will be named the basename of \fI<source>\fR.
 If \fI<source>\fR is not a subvolume, \fBbtrfs\fR returns an error.
-If \fI-r\fR is given, the snapshot will be readonly.
+.RS
+
+\fIOptions\fP
+.IP \fB-r\fP 5
+The newly created snapshot will be readonly.
+.IP "\fB-i\fP \fI<qgroupid>\fR" 5
+Add the newly created subvolume to a qgroup. This option can be given multiple
+times.
+.RE
+.TP
+
+\fBsubvolume snapshot\fP [-r] [-i qgroupid] \fI-s <subvolid>\fP \fI<dest>\fP/\fI<name>\fP
+Create a writable/readonly snapshot of the subvolume \fI<subvolid>\fR with the
+name \fI<name>\fR in the \fI<dest>\fR directory.
+If \fI<subvolid>\fR does not refer to a subvolume, \fBbtrfs\fR returns an error.
+.RS
+
+\fIOptions\fP
+.IP \fB-r\fP 5
+The newly created snapshot will be readonly.
+.IP "\fB-i\fP \fI<qgroupid>\fR" 5
+Add the newly created subvolume to a qgroup. This option can be given multiple
+times.
+.RE
 .TP
 
 \fBsubvolume get-default\fR\fI <path>\fR

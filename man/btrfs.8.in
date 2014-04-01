@@ -33,7 +33,7 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBfilesystem defragment\fP [\fIoptions\fP] \fI<file>\fP|\fI<dir>\fP [\fI<file>\fP|\fI<dir>...\fP]\fP
 .PP
-\fBbtrfs\fP \fBfilesystem resize\fP [\fIdevid\fP:][+/\-]\fI<size>\fP[gkm]|[\fIdevid\fP:]\fImax <path>\fP
+\fBbtrfs\fP \fBfilesystem resize\fP [\fIdevid\fP:][+/\-]\fI<size>\fP[kKmMgGtTpPeE]|[\fIdevid\fP:]\fImax <path>\fP
 .PP
 \fBbtrfs\fP \fBfilesystem label\fP [\fI<device>\fP|\fI<mount_point>\fP] [\fI<newlabel>\fP]
 .PP
@@ -409,7 +409,7 @@ copies with \fBcp --reflink\fP.
 .\"
 .\" Some wording are extracted by the resize2fs man page
 .\"
-\fBfilesystem resize\fP [\fIdevid\fP:][+/\-]\fI<size>\fP[gkm]|[\fIdevid\fP:]\fImax <path>\fR
+\fBfilesystem resize\fP [\fIdevid\fP:][+/\-]\fI<size>\fP[kKmMgGtTpPeE]|[\fIdevid\fP:]\fImax <path>\fR
 Resize a filesystem identified by \fI<path>\fR for the underlying device
 \fIdevid\fR.  The \fIdevid\fR can be found with \fBbtrfs filesystem show\fR and
 defaults to 1 if not specified.
@@ -418,8 +418,9 @@ If the prefix \fI+\fR or \fI\-\fR is present the size is increased or decreased
 by the quantity \fI<size>\fR.
 If no units are specified, the unit of the \fI<size>\fR parameter defaults to
 bytes. Optionally, the size parameter may be suffixed by one of the following
-units designators: 'K', 'M', or 'G', kilobytes, megabytes, or gigabytes,
-respectively.
+units designators: 'K', 'M', 'G', 'T', 'P', 'E', kibibytes, mebibytes, gibibytes,
+tebibytes, pebibytes, exbibytes respectively.
+K means KiB, which denotes 1KiB = 1024B, 1MiB = 1024KiB, etc..
 
 If 'max' is passed, the filesystem will occupy all available space on the
 device \fIdevid\fR.

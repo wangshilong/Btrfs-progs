@@ -1,0 +1,51 @@
+btrfs-dedup(8)
+==============
+
+NAME
+----
+btrfs-dedup - control the deduplication in a btrfs filesystem
+
+SYNOPSIS
+--------
+'btrfs dedup' <subcommand> <args>
+
+DESCRIPTION
+-----------
+WARNING: Deduplication function is not implemented in mainline kernel(v3.14
+yet). So most user may find this function not usable.
+
+'btrfs dedup' is used to control deduplication in a bttrfs filesystem.
+
+SUBCOMMAND
+----------
+'enable' <path>::
+Enable data deduplication support for a filesystem.
+
+
+'disable' <path>::
+Disable data deduplication support for a filesystem.
+
+
+'on' [-b|--bs size] <path>::
+Switch on data deduplication or change the dedup blocksize.
+
+
+'off' <path>::
+Switch off data deduplication.
+
+EXIT STATUS
+-----------
+'btrfs dedup' returns a zero exist status if it succeeds. Non zero is
+returned in case of failure.
+
+AVAILABILITY
+------------
+'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8),

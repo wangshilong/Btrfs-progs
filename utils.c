@@ -2054,7 +2054,8 @@ int btrfs_scan_lblkid(int update_kernel)
 	blkid_cache cache = NULL;
 	char path[PATH_MAX];
 
-	if (blkid_get_cache(&cache, 0) < 0) {
+	/* No to use libblkid cache to avoid old data */
+	if (blkid_get_cache(&cache, "/dev/null") < 0) {
 		printf("ERROR: lblkid cache get failed\n");
 		return 1;
 	}

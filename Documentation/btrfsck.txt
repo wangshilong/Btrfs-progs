@@ -1,0 +1,55 @@
+btrfsck(8)
+==========
+
+NAME
+----
+btrfsck - check or repair a btrfs filesystem offline
+
+SYNOPSIS
+--------
+'btrfsck' [options] <device>
+
+DESCRIPTION
+-----------
+'btrfsck' is used to check and optionally repair of a Btrfs filesystem.
+
+Now, it can only be run on an unmounted FS.
+<device> is the device file where the filesystem is stored.
+
+'btrfsck' is just an alias of 'btrfs check' command.
+
+WARNING: Considering it is not well-tested in real-life situations yet.
+If you have a broken Btrfs filesystem, btrfsck may not repair but cause
+additional damages. 
+
+
+OPTIONS
+-------
+-s|--support <superblock>::
+use <superblock>th superblock copy.
+--repair::
+try to repair the filesystem.
+--init-csum-tree::
+create a new CRC tree.
+--init-extent-tree::
+create a new extent tree.
+
+EXIT STATUS
+-----------
+'btrfsck' returns a zero exist status if it succeeds. Non zero is
+returned in case of failure.
+
+AVAILABILITY
+------------
+'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8),
+`btrfs-scrub`(8),
+`btrfs-rescue`(8)
+`btrfs-check`(8)

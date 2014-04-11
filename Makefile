@@ -56,9 +56,9 @@ btrfs_convert_libs = -lext2fs -lcom_err
 btrfs_image_libs = -lpthread
 btrfs_fragment_libs = -lgd -lpng -ljpeg -lfreetype
 
-SUBDIRS = man
-BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS))
-INSTALLDIRS = $(patsubst %,install-%,$(SUBDIRS))
+SUBDIRS =
+BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS)) build-Documentation
+INSTALLDIRS = $(patsubst %,install-%,$(SUBDIRS)) install-Documentation
 CLEANDIRS = $(patsubst %,clean-%,$(SUBDIRS))
 
 .PHONY: $(SUBDIRS)
@@ -120,7 +120,7 @@ endif
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(AM_CFLAGS) $(STATIC_CFLAGS) -c $< -o $@
 
-all: $(progs) manpages $(BUILDDIRS)
+all: $(progs) $(BUILDDIRS)
 $(SUBDIRS): $(BUILDDIRS)
 $(BUILDDIRS):
 	@echo "Making all in $(patsubst build-%,%,$@)"
@@ -221,7 +221,9 @@ send-test: $(objects) $(libs) send-test.o
 	$(Q)$(CC) $(CFLAGS) -o send-test $(objects) send-test.o $(LDFLAGS) $(LIBS) -lpthread
 
 manpages:
-	$(Q)$(MAKE) $(MAKEOPTS) -C man
+	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation
+
+clean-all: clean-doc clean
 
 clean: $(CLEANDIRS)
 	@echo "Cleaning"
@@ -230,6 +232,10 @@ clean: $(CLEANDIRS)
 	      btrfs.static mkfs.btrfs.static btrfs-calc-size \
 	      version.h $(check_defs) \
 	      $(libs) $(lib_links)
+
+clean-doc:
+	@echo "Cleaning Documentation"
+	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation clean
 
 $(CLEANDIRS):
 	@echo "Cleaning $(patsubst clean-%,%,$@)"

@@ -12,7 +12,9 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBsubvolume list\fP [\fIoptions\fP] [-G [+|-]\fIvalue\fP] [-C [+|-]\fIvalue\fP] [--sort=rootid,gen,ogen,path] \fI<path>\fP
 .PP
-\fBbtrfs\fP \fBsubvolume snapshot\fP [-r] \fI<source>\fP \fI<dest>\fP|[\fI<dest>\fP/]\fI<name>\fP
+\fBbtrfs\fP \fBsubvolume snapshot\fP [-r] [-i qgroupid] \fI<source>\fP \fI<dest>\fP|[\fI<dest>\fP/]\fI<name>\fP
+.PP
+\fBbtrfs\fP \fBsubvolume snapshot\fP [-r] [-i qgroupid] \fI-s <subvolid>\fP \fI<dest>/<name>\fP
 .PP
 \fBbtrfs\fP \fBsubvolume get-default\fP\fI <path>\fP
 .PP
@@ -23,18 +25,23 @@ btrfs \- control a btrfs filesystem
 \fBbtrfs\fP \fBsubvolume show\fP\fI <path>\fP
 .PP
 .PP
-\fBbtrfs\fP \fBfilesystem df\fP\fI <path>\fP
+\fBbtrfs\fP \fBfilesystem df\fP\fI [-b] \fIpath [path..]\fR\fP
 .PP
-\fBbtrfs\fP \fBfilesystem show\fP [\fI--mounted\fP|\fI--all-devices\fP|\fI<uuid>\fP]\fP
+\fBbtrfs\fP \fBfilesystem show\fP [\fI--mounted\fP|\fI--all-devices\fP|\fI<path>\fP|\fI<uuid>\fP|\fI<device>\fP|\fI<lable>\fP]\fP
 .PP
 \fBbtrfs\fP \fBfilesystem sync\fP\fI <path> \fP
 .PP
 \fBbtrfs\fP \fBfilesystem defragment\fP [\fIoptions\fP] \fI<file>\fP|\fI<dir>\fP [\fI<file>\fP|\fI<dir>...\fP]\fP
 .PP
-\fBbtrfs\fP \fBfilesystem resize\fP [\fIdevid\fP:][+/\-]\fI<size>\fP[gkm]|[\fIdevid\fP:]\fImax <path>\fP
+\fBbtrfs\fP \fBfilesystem resize\fP [\fIdevid\fP:][+/\-]\fI<size>\fP[kKmMgGtTpPeE]|[\fIdevid\fP:]\fImax <path>\fP
 .PP
 \fBbtrfs\fP \fBfilesystem label\fP [\fI<device>\fP|\fI<mount_point>\fP] [\fI<newlabel>\fP]
 .PP
+\fBbtrfs\fP \fBfilesystem disk-usage [-tb]\fP\fI <path> 
+[path..]\fP
+.PP
+.PP
+\fBbtrfs\fP \fB[filesystem] balance\fP\fI <path> \fP
 .PP
 \fBbtrfs\fP \fB[filesystem] balance start\fP [\fIoptions\fP] \fI<path>\fP
 .PP
@@ -51,7 +58,9 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBdevice delete\fP \fI<device>\fP [\fI<device>...\fP] \fI<path>\fP
 .PP
-\fBbtrfs\fP \fBdevice scan\fP [\fI--all-devices\fP|\fI<device> \P[\fI<device>...\fP]
+\fBbtrfs\fP \fBdevice scan\fP [(\fI-d\fP|\fI--all-devices\fP)|\fI<device>\fP [\fI<device>...\fP]]
+.PP
+\fBbtrfs\fP \fBdevice disk-usage\fP\fI [-b] <path> [<path>...] \fP
 .PP
 \fBbtrfs\fP \fBdevice ready\fP\fI <device>\fP
 .PP
@@ -69,11 +78,11 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBcheck\fP [\fIoptions\fP] \fI<device>\fP
 .PP
-\fBbtrfs\fP \fBrescue chunk-recover\fP [\fIoptions\fP] \fI<path>\fP
+\fBbtrfs\fP \fBrescue chunk-recover\fP [\fIoptions\fP] \fI<device>\fP
 .PP
-\fBbtrfs\fP \fBrescue super-recover\fP [\fIoptions\fP] \fI<path>\fP
+\fBbtrfs\fP \fBrescue super-recover\fP [\fIoptions\fP] \fI<device>\fP
 .PP
-\fBbtrfs\fP \fBrestore\fP [\fIoptions\fP] \fI<device>\fP
+\fBbtrfs\fP \fBrestore\fP [\fIoptions\fP] \fI<device>\fP \fI<path>\fP | -l \fI<device>\fP
 .PP
 .PP
 \fBbtrfs\fP \fBinspect-internal inode-resolve\fP [-v] \fI<inode>\fP \fI<path>\fP
@@ -94,7 +103,7 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBquota disable\fP\fI <path>\fP
 .PP
-\fBbtrfs\fP \fBquota rescan\fP [-s] \fI<path>\fP
+\fBbtrfs\fP \fBquota rescan\fP [-sw] \fI<path>\fP
 .PP
 .PP
 \fBbtrfs\fP \fBqgroup assign\fP \fI<src>\fP \fI<dst>\fP \fI<path>\fP
@@ -105,7 +114,7 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBqgroup destroy\fP \fI<qgroupid>\fP \fI<path>\fP
 .PP
-\fBbtrfs\fP \fBqgroup show\fP \fI<path>\fP
+\fBbtrfs\fP \fBqgroup show\fP [\fIoptions\fP] \fI<path>\fP
 .PP
 \fBbtrfs\fP \fBqgroup limit\fP [\fIoptions\fP] \fI<size>\fP|\fBnone\fP [\fI<qgroupid>\fP] \fI<path>\fP
 .PP
@@ -115,6 +124,14 @@ btrfs \- control a btrfs filesystem
 \fBbtrfs\fP \fBreplace status\fP [-1] \fI<mount_point>\fP
 .PP
 \fBbtrfs\fP \fBreplace cancel\fP \fI<mount_point>\fP
+.PP
+\fBbtrfs\fP \fBdedup enable <path> \fP\fI\fP
+.PP
+\fBbtrfs\fP \fBdedup disable <path> \fP\fI\fP
+.PP
+\fBbtrfs\fP \fBdedup on [-b|--bs size] <path> \fP\fI\fP
+.PP
+\fBbtrfs\fP \fBdedup off <path> \fP\fI\fP
 .PP
 \fBbtrfs\fP \fBhelp|\-\-help \fP
 .PP
@@ -242,12 +259,35 @@ for \fB--sort\fP you can combine some items together by ',', just like
 .RE
 .TP
 
-\fBsubvolume snapshot\fP [-r] \fI<source>\fP \fI<dest>\fP|[\fI<dest>\fP/]\fI<name>\fP
+\fBsubvolume snapshot\fP [-r] [-i qgroupid] \fI<source>\fP \fI<dest>\fP|[\fI<dest>\fP/]\fI<name>\fP
 Create a writable/readonly snapshot of the subvolume \fI<source>\fR with the
 name \fI<name>\fR in the \fI<dest>\fR directory.
 If only \fI<dest>\fR is given, the subvolume will be named the basename of \fI<source>\fR.
 If \fI<source>\fR is not a subvolume, \fBbtrfs\fR returns an error.
-If \fI-r\fR is given, the snapshot will be readonly.
+.RS
+
+\fIOptions\fP
+.IP \fB-r\fP 5
+The newly created snapshot will be readonly.
+.IP "\fB-i\fP \fI<qgroupid>\fR" 5
+Add the newly created subvolume to a qgroup. This option can be given multiple
+times.
+.RE
+.TP
+
+\fBsubvolume snapshot\fP [-r] [-i qgroupid] \fI-s <subvolid>\fP \fI<dest>\fP/\fI<name>\fP
+Create a writable/readonly snapshot of the subvolume \fI<subvolid>\fR with the
+name \fI<name>\fR in the \fI<dest>\fR directory.
+If \fI<subvolid>\fR does not refer to a subvolume, \fBbtrfs\fR returns an error.
+.RS
+
+\fIOptions\fP
+.IP \fB-r\fP 5
+The newly created snapshot will be readonly.
+.IP "\fB-i\fP \fI<qgroupid>\fR" 5
+Add the newly created subvolume to a qgroup. This option can be given multiple
+times.
+.RE
 .TP
 
 \fBsubvolume get-default\fR\fI <path>\fR
@@ -269,12 +309,55 @@ List the recently modified files in a subvolume, after \fI<last_gen>\fR ID.
 Show information of a given subvolume in the \fI<path>\fR.
 .TP
 
-\fBfilesystem df\fP\fI <path>\fR
+\fBfilesystem df\fP [-b] \fIpath [path..]\fR
+
 Show space usage information for a mount point.
+
+\fB-b\fP Set byte as unit
+
+The command \fBbtrfs filesystem df\fP is used to query how many space on the 
+disk(s) are used and an estimation of the free
+space of the filesystem.
+The output of the command \fBbtrfs filesystem df\fP shows:
+
+.RS
+.IP \fBDisk\ size\fP
+the total size of the disks which compose the filesystem.
+
+.IP \fBDisk\ allocated\fP
+the size of the area of the disks used by the chunks.
+
+.IP \fBDisk\ unallocated\fP 
+the size of the area of the disks which is free (i.e.
+the differences of the values above).
+
+.IP \fBUsed\fP
+the portion of the logical space used by the file and metadata.
+
+.IP \fBFree\ (estimated)\fP
+the estimated free space available: i.e. how many space can be used
+by the user. The evaluation 
+cannot be rigorous because it depends by the allocation policy (DUP, Single,
+RAID1...) of the metadata and data chunks. If every chunk is stored as
+"Single" the sum of the \fBfree (estimated)\fP space and the \fBused\fP 
+space  is equal to the \fBdisk size\fP.
+Otherwise if all the chunk are mirrored (raid1 or raid10) or duplicated
+the sum of the \fBfree (estimated)\fP space and the \fBused\fP space is
+half of the \fBdisk size\fP. Normally the \fBfree (estimated)\fP is between
+these two limits.
+
+.IP \fBData\ to\ disk\ ratio\fP
+the ratio betwen the \fBlogical size\fP (i.e. the space available by
+the chunks) and the \fBdisk allocated\fP (by the chunks). Normally it is 
+lower than 100% because the metadata is duplicated for security reasons.
+If all the data and metadata are duplicated (or have a profile like RAID1)
+the \fBData\ to\ disk\ ratio\fP could be 50%.
+.RE
 .TP
 
-\fBfilesystem show\fR [\fI--mounted\fP|\fI--all-devices\fP|\fI<uuid>\fR]\fR
-Show the btrfs filesystem with some additional info. If no option or \fIUUID\fP
+\fBfilesystem show\fR [\fI--mounted\fP|\fI--all-devices\fP|\fI<path>\fP|\fI<uuid>\fP|\fI<device>\fP|\fI<lable>\fP]\fR
+Show the btrfs filesystem with some additional info. If no option or
+\fIPATH\fP|\fIUUID\fP|\fIDEVICE\fP|\fILABEL\fP
 is passed, \fBbtrfs\fR shows information of all the btrfs filesystem both mounted
 and unmounted.
 If \fB--mounted\fP is passed, it would probe btrfs kernel to list mounted btrfs filesystem(s);
@@ -326,7 +409,7 @@ copies with \fBcp --reflink\fP.
 .\"
 .\" Some wording are extracted by the resize2fs man page
 .\"
-\fBfilesystem resize\fP [\fIdevid\fP:][+/\-]\fI<size>\fP[gkm]|[\fIdevid\fP:]\fImax <path>\fR
+\fBfilesystem resize\fP [\fIdevid\fP:][+/\-]\fI<size>\fP[kKmMgGtTpPeE]|[\fIdevid\fP:]\fImax <path>\fR
 Resize a filesystem identified by \fI<path>\fR for the underlying device
 \fIdevid\fR.  The \fIdevid\fR can be found with \fBbtrfs filesystem show\fR and
 defaults to 1 if not specified.
@@ -335,8 +418,9 @@ If the prefix \fI+\fR or \fI\-\fR is present the size is increased or decreased
 by the quantity \fI<size>\fR.
 If no units are specified, the unit of the \fI<size>\fR parameter defaults to
 bytes. Optionally, the size parameter may be suffixed by one of the following
-units designators: 'K', 'M', or 'G', kilobytes, megabytes, or gigabytes,
-respectively.
+units designators: 'K', 'M', 'G', 'T', 'P', 'E', kibibytes, mebibytes, gibibytes,
+tebibytes, pebibytes, exbibytes respectively.
+K means KiB, which denotes 1KiB = 1024B, 1MiB = 1024KiB, etc..
 
 If 'max' is passed, the filesystem will occupy all available space on the
 device \fIdevid\fR.
@@ -353,12 +437,29 @@ the same starting disk cylinder as before.
 \fBfilesystem label\fP [\fI<dev>\fP|\fI<mount_point>\fP] [\fInewlabel\fP]\fP
 Show or update the label of a filesystem. \fI[<device>|<mountpoint>]\fR is used
 to identify the filesystem. 
+
 If a \fInewlabel\fR optional argument is passed, the label is changed. The
 following constraints exist for a label:
 .IP
 - the maximum allowable length shall be less than 256 chars
 .TP
+\fBfilesystem disk-usage\fP [-tb] \fIpath [path..]\fR
 
+Show in which disk the chunks are allocated.
+
+\fB-b\fP Set byte as unit
+
+\fB-t\fP Show data in tabular format
+
+.TP
+
+\fB[filesystem] balance \fI<path>\fR
+Blanace chunks across the devices
+
+\fBbtrfs balance \fI<path>\fR is deprecated,
+please use \fBbtrfs balance start\fR command instead.
+
+.TP
 \fB[filesystem] balance start\fR [\fIoptions\fP] \fI<path>\fR
 Balance chunks across the devices
 Balance and/or convert (change allocation profile of) chunks that
@@ -385,6 +486,8 @@ force reducing of metadata integrity
 
 \fB[filesystem] balance pause\fR\fI <path>\fR
 Pause running balance.
+
+.RE
 .TP
 
 \fB[filesystem] balance cancel\fR\fI <path>\fR
@@ -405,7 +508,7 @@ be verbose
 .RE
 .TP
 
-\fBdevice add\fR\fI [-Kf] <dev> \fP[\fI<dev>...\fP] \fI<path>\fR
+\fBdevice add\fR [-Kf] \fI<dev> \fP[\fI<dev>...\fP] \fI<path>\fR
 Add device(s) to the filesystem identified by \fI<path>\fR.
 If applicable, a whole device discard (TRIM) operation is performed.
 .RS
@@ -422,12 +525,18 @@ force overwrite of existing filesystem on the given disk(s)
 Remove device(s) from a filesystem identified by \fI<path>\fR.
 .TP
 
-\fBdevice scan\fR [--all-devices|\fI<device> \fP[\fI<device>...\fP]\fR
+\fBdevice scan\fR [(--all-devices|-d)|\fI<device> \fP[\fI<device>...\fP]]\fR
 If one or more devices are passed, these are scanned for a btrfs filesystem. 
 If no devices are passed, \fBbtrfs\fR uses block devices containing btrfs
 filesystem as listed by blkid.
-Finally, if \fB--all-devices\fP is passed, all the devices under /dev are 
+Finally, if \fB--all-devices\fP or \fB-d\fP is passed, all the devices under /dev are 
 scanned.
+.TP
+
+\fBdevice disk-usage\fR\fI [-b] <path> [<path>..]\fR
+Show which chunks are in a device.
+
+\fB-b\fP set byte as unit.
 .TP
 
 \fBdevice ready\fR \fI<device>\fR
@@ -445,7 +554,7 @@ Reset stats to zero after reading them.
 .RE
 .TP
 
-\fBscrub start\fP [-BdqrR] [-c \fIioprio_class\fP -n \fIioprio_classdata\fP] {\fI<path>\fP|\fI<device>\fP}
+\fBscrub start\fP [-BdqrRf] [-c \fIioprio_class\fP -n \fIioprio_classdata\fP] {\fI<path>\fP|\fI<device>\fP}
 Start a scrub on all devices of the filesystem identified by \fI<path>\fR or on
 a single \fI<device>\fR. Without options, scrub is started as a background
 process. Progress can be obtained with the \fBscrub status\fR command. Scrubbing
@@ -557,8 +666,8 @@ verbose mode.
 .RE
 .TP
 
-\fBrestore\fR [\fIoptions\fP] <device>\fR
-Try to restore files from a damaged filesystem(unmounted).
+\fBrestore\fR [\fIoptions\fP] \fI<device>\fR \fI<path>\fR | -l \fI<device>\fP
+Try to restore files from a damaged filesystem(unmounted) to given \fI<path>\fR or list  tree roots.
 .RS
 
 \fIOptions\fR
@@ -700,6 +809,8 @@ Trash all qgroup numbers and scan the metadata again with the current config.
 \fIOptions\fR
 .IP "\fB-s\fP" 5
 show status of a running rescan operation.
+.IP "\fB-w\fP" 5
+wait for rescan operation to finish(can be already in progress).
 .RE
 .TP
 
@@ -719,8 +830,28 @@ Create a subvolume quota group.
 Destroy a subvolume quota group.
 .TP
 
-\fBqgroup show\fP \fI<path>\fP
+\fBqgroup show\fP [\fIoptions\fP] \fI<path>\fP
 Show all subvolume quota groups.
+.RS
+
+\fIOptions\fR
+.IP "\fB-p\fP" 5
+print parent qgroup id.
+.IP "\fB-c\fP" 5
+print child qgroup id.
+.IP "\fB-r\fP" 5
+print max referenced size of qgroup.
+.IP "\fB-e\fP" 5
+print max exclusive size of qgroup.
+.IP "\fB-F\fP" 5
+list all qgroups which impact the given path(include ancestral qgroups)
+.IP "\fB-f\fP" 5
+list all qgroups which impact the given path(exclude ancestral qgroups)
+.IP "\fB--sort=ATTR\fP" 5
+list qgroups in order of ATTR.
+ATTR can be one or more of \fBqgroupid\fP,\fBrfer\fP,\fBexcl\fP,\fBmax_rfer\fP,\fBmax_excl\fP.
+If multiple ATTRs is given, use comma to seperate.
+.RE
 .TP
 
 \fBqgroup limit\fP [\fIoptions\fP] \fI<size>\fP|\fBnone\fP [\fI<qgroupid>\fP] \fI<path>\fP
@@ -769,6 +900,22 @@ operation finishes (or is canceled)
 
 \fBreplace cancel\fR \fI<mount_point>\fR
 Cancel a running device replace operation.
+.TP
+
+\fBbtrfs dedup enable\fP \fI<path>\fP
+Enable data deduplication support for a filesystem.
+.TP
+
+\fBbtrfs dedup disable\fP \fI<path>\fP
+Disable data deduplication support for a filesystem.
+.TP
+
+\fBbtrfs dedup on [-b|--bs size]\fP \fI<path>\fP
+Switch on data deduplication or change the dedup blocksize.
+.TP
+
+\fBbtrfs dedup off\fP \fI<path>\fP
+Switch off data deduplication.
 .RE
 
 .SH EXIT STATUS

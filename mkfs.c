@@ -47,6 +47,7 @@
 #include "version.h"
 
 static u64 index_cnt = 2;
+static int init_metadata_chunks_ratio = 0;
 
 #define DEFAULT_MKFS_FEATURES	(BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF \
 		| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)
@@ -210,16 +211,42 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+static int init_extra_metadata_chunks(struct btrfs_trans_handle *trans,
+				 struct btrfs_root *root, u64 meta_flags)
+{
+	u64 chunk_start;
+	u64 chunk_size;
+	u64 allocated = 0;
+	u64 max_allocated = init_metadata_chunks_ratio * btrfs_super_total_bytes(root->fs_info->super_copy) / 100;
+	int ret;
+
+	while (allocated < max_allocated) {
+		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+					&chunk_start, &chunk_size, meta_flags);
+		if (ret == -ENOSPC) {
+			fprintf(stderr, "not enough free space\n");
+			return ret;
+		}
+		BUG_ON(ret);
+		ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
+					     meta_flags, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+					     chunk_start, chunk_size);
+		BUG_ON(ret);
+		allocated += chunk_size;
+	}
+	return ret;
+}
+
 static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 data_profile,
 			      int data_profile_opt, u64 metadata_profile,
 			      int mixed)
 {
 	u64 num_devices = btrfs_super_num_devices(root->fs_info->super_copy);
+	u64 meta_flags = BTRFS_BLOCK_GROUP_METADATA;
 	int ret;
 
 	if (metadata_profile) {
-		u64 meta_flags = BTRFS_BLOCK_GROUP_METADATA;
 
 		ret = create_one_raid_group(trans, root,
 					    BTRFS_BLOCK_GROUP_SYSTEM |
@@ -229,10 +256,10 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 		if (mixed)
 			meta_flags |= BTRFS_BLOCK_GROUP_DATA;
 
-		ret = create_one_raid_group(trans, root, meta_flags |
-					    metadata_profile);
 		BUG_ON(ret);
-
+		if (!init_metadata_chunks_ratio)
+			ret = create_one_raid_group(trans, root, meta_flags | metadata_profile);
+		BUG_ON(ret);
 	}
 	if (!mixed && num_devices > 1 && data_profile) {
 		ret = create_one_raid_group(trans, root,
@@ -240,6 +267,8 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 					    data_profile);
 		BUG_ON(ret);
 	}
+	if (init_metadata_chunks_ratio)
+		ret = init_extra_metadata_chunks(trans, root, meta_flags | metadata_profile);
 	recow_roots(trans, root);
 
 	return 0;
@@ -293,6 +322,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t -O --features comma separated list of filesystem features\n");
 	fprintf(stderr, "\t -U --uuid specify the filesystem UUID\n");
 	fprintf(stderr, "\t -V --version print the mkfs.btrfs version and exit\n");
+	fprintf(stderr, "\t -i metadata_ratio(for exmaple,10,20,30 percentage of whole filesystem)\n");
 	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
@@ -1283,7 +1313,7 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:U:VMK",
+		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:U:VMKi:",
 				long_options, &option_index);
 		if (c < 0)
 			break;
@@ -1357,6 +1387,12 @@ int main(int ac, char **av)
 				break;
 			case 'K':
 				discard = 0;
+				break;
+			case 'i':
+				init_metadata_chunks_ratio = atoi(optarg);
+				if (init_metadata_chunks_ratio <= 0 || init_metadata_chunks_ratio > 90) {
+					fprintf(stderr, "ERROR: invalid metadata_chunks_ratio\n");
+				}
 				break;
 			default:
 				print_usage();

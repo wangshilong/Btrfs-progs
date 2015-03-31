@@ -49,7 +49,7 @@ endif
 MAKEOPTS = --no-print-directory Q=$(Q)
 
 progs = mkfs.btrfs btrfs-debug-tree btrfsck \
-	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
+	btrfs btrfs-map-logical btrfs-image btrfs-zero-log\
 	btrfs-find-root btrfstune btrfs-show-super
 
 progs_extra = btrfs-corrupt-block btrfs-fragments btrfs-calc-size \
@@ -141,7 +141,7 @@ $(BUILDDIRS):
 	@echo "Making all in $(patsubst build-%,%,$@)"
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(patsubst build-%,%,$@)
 
-test: btrfs btrfs-convert btrfs-image btrfs-corrupt-block
+test: btrfs btrfs-image btrfs-corrupt-block
 	$(Q)for t in $(TESTS); do \
 		echo "     [TEST]    $$t"; \
 		bash tests/$$t || exit 1; \
